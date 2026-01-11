@@ -1,1 +1,11 @@
 # League-Ml-Project
+- Ściągamy listę Challengerów/GrandMasterów/Masterów z Europy (EUNE/EUW) (możemy potem inne rangi dodawać)
+  - https://euw1.api.riotgames.com/lol/league/v4/challengerleagues/by-queue/RANKED_SOLO_5x5?{api_key}
+- Ściągamy listę meczów dla każdego gracza
+  - https://europe.api.riotgames.com/lol/match/v5/matches/by-puuid/{PUUID}/ids?start=0&count=100&{api_key} (100 meczów)
+- Odczytujemy id tego gracza w danym meczu i zapisujemy jego trajektorię
+  - https://europe.api.riotgames.com/lol/match/v5/matches/{match_id}/timeline?{api_key}
+- Robimy klasteryzację na jakiej pozycji gra dany gracz (po jego trajektoriach)
+- Dodatkowo klasteryzujemy graczy po typach championów
+  - https://eun1.api.riotgames.com/lol/league/v4/challengerleagues/by-queue/RANKED_SOLO_5x5?{api_key} -> championId
+- I sprawdzamy czy typy graczy jakoś się łączą z naszymi predykcjami pozycji
