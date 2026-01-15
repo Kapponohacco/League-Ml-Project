@@ -44,7 +44,8 @@ def get_match_ids(match_routing: str, puuid: str, count: int, session, riot_get,
             return response.json()
         elif response.status_code == 429:
             retry_after = int(response.headers.get("Retry-After", 1))
-            print(f"Rate limited, sleeping for {retry_after + 1}s (attempt {attempt + 1}/{max_retries})")
+            print(f"Response: retry-after {retry_after}s")
+            print(f"Rate limited, sleeping for 120 s (attempt {attempt + 1}/{max_retries})")
             time.sleep(retry_after + 1)
             # Continue to retry instead of returning []
         elif response.status_code < 416:
@@ -83,7 +84,7 @@ def fetch_match_ids_for_routing(players_subset, routing, match_ids, lock):
 
 
 def main():
-    players = pd.read_parquet("data\player_index.parquet")
+    players = pd.read_parquet("src\data\player_index.parquet")
 
     players["match_routing"] = players["region"].map(MATCH_ROUTING)
 
