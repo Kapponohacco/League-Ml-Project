@@ -38,7 +38,12 @@ def get_trajectories(match_routing: str, match_id: str, session, max_retries=3):
     url = f"https://{match_routing}.api.riotgames.com/lol/match/v5/matches/{match_id}/timeline?api_key={API_KEY}"
 
     for attempt in range(max_retries):
-        response = riot_get(session, match_routing, url)
+        try:
+            response = riot_get(session, match_routing, url)
+        except requests.exceptions.RequestException as e:
+            print(f"[{match_routing}] Connection error for {match_id}: {e}")
+            time.sleep(2 + attempt)
+            continue
 
         if response.status_code == 200:
             return response.json()
