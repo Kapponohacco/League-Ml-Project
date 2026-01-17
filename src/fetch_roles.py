@@ -40,7 +40,12 @@ def get_roles(match_routing: str, match_id: str, session, max_retries=3):
     url = f"https://{match_routing}.api.riotgames.com/lol/match/v5/matches/{match_id}?api_key={API_KEY}"
 
     for attempt in range(max_retries):
-        response = riot_get(session, match_routing, url)
+        try:
+            response = riot_get(session, match_routing, url)
+        except requests.exceptions.RequestException as e:
+            print(f"[{match_routing}] Connection error for {match_id}: {e}")
+            time.sleep(2 + attempt)
+            continue
 
         if response.status_code == 200:
             return response.json()
@@ -97,7 +102,7 @@ def fetch_roles_for_routing(match_ids_subset, routing, roles: list, matches: set
     total = len(match_ids_subset)
     for idx, (_, row) in enumerate(match_ids_subset.iterrows(), 1):
         if idx % 50 == 0:
-            print(f"[{routing}] Processed {idx}/{total} match ids, time since start{time.time() - START}")
+            print(f"[{routing}] Processed {idx}/{total} match ids, time since start {round(time.time() - START,2)}s")
         
         timeline = get_roles(
             routing,
@@ -114,7 +119,6 @@ def fetch_roles_for_routing(match_ids_subset, routing, roles: list, matches: set
 
 
 def main():
-    
     match_ids = pd.read_parquet("data/match_ids.parquet")
 
     match_ids["match_routing"] = (
