@@ -114,8 +114,8 @@ def main():
 
     df_players = deduplicate_player_data(data_players)
 
-    df_players.to_parquet("data/player_index.parquet", index=False)
-    df_players.to_csv("data/player_index.csv", index=False)
+    df_players.to_parquet("data_raw/player_index.parquet", index=False)
+    df_players.to_csv("data_raw/player_index.csv", index=False)
 
 
 if __name__ == "__main__":

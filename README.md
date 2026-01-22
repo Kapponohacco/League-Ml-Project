@@ -11,8 +11,10 @@
 TO TRZEBA POPRAWIĆ
 
 
+
+
 ## READMEEEEEE
-OD KAPPO:
+OD KAPPO 15.01:
 Musisz stworzyc plik api.txt, i dodac do niego swoj klucz api. Plik jest wrzucont do gitignore wiec nie zostanie wrzucony na githuba.
 
 Dane wczytujemy z plikow parquet, pliki csv są tylko do podglądu ludzkiego dla wygody pracy!!!
@@ -27,3 +29,5 @@ Niestety plik fetch_matches zbiera po 10 grach zagranych przez wszystkich graczy
 Gdybyśmy chcieli filtrowac mecze w pliku fetch_matches.py czas oczekiwania zwiekszyłby sie z 1,5h do 10,5h :)
 
 Plik fetch_trajectories.py powinien kozystac tylko z przefiltrowanych id.
+
+

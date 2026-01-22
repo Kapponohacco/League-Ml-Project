@@ -118,7 +118,7 @@ def fetch_trajectories_for_routing(match_ids_subset, routing, trajectories, lock
 
 
 def main():
-    match_ids = pd.read_parquet("data/match_ids_filtered.parquet")
+    match_ids = pd.read_parquet("data_raw/match_ids_filtered1.parquet")
 
     match_ids["match_routing"] = (
         match_ids["match_id"]
@@ -150,8 +150,8 @@ def main():
     print(f"\nTotal unique trajectories collected: {len(trajectories)}")
     
     data = pd.DataFrame(trajectories)
-    data.to_parquet("data/trajectories.parquet", index=False)
-    data.to_csv("data/trajectories.csv", index=False)
+    data.to_parquet("data_raw/trajectories1.parquet", index=False)
+    data.to_csv("data_raw/trajectories1.csv", index=False)
 
 
 if __name__ == "__main__":
