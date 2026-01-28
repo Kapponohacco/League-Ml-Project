@@ -19,7 +19,14 @@ RANK_PRIORITY = {
     "SILVER": 1,
     "BRONZE": 0
 }
-API_KEY = np.loadtxt("api.txt", dtype = str) 
+def load_api_key(path="api.txt"):
+    with open(path, "r", encoding="utf-8") as handle:
+        lines = [line.strip() for line in handle if line.strip()]
+    if len(lines) != 1:
+        raise ValueError("api.txt must contain exactly one non-empty line with the API key.")
+    return lines[0]
+
+API_KEY = load_api_key()
     
 def get_ranked_data(region: str, rank: str, division: str):
     
@@ -29,17 +36,21 @@ def get_ranked_data(region: str, rank: str, division: str):
     
     
     if rank.lower() in RANKS_HIGHELO:
-        url = f"https://{region}.api.riotgames.com/lol/league/v4/{rank}leagues/by-queue/RANKED_SOLO_5x5?api_key={API_KEY}"
+        url = f"https://{region}.api.riotgames.com/lol/league/v4/{rank}leagues/by-queue/RANKED_SOLO_5x5"
+        headers = {"X-Riot-Token": API_KEY}
         
         try:
-            response = requests.get(url)
+            response = requests.get(url, headers=headers, timeout=10)
 
             if response.status_code == 200:
                 players = response.json()
                 return players["entries"]
             else:
-                error = response.json()
-                print(error["message"])
+                try:
+                    error = response.json()
+                except Exception:
+                    error = response.text
+                print(error)
                 return None
             
         except requests.exceptions.RequestException as e:
@@ -49,28 +60,38 @@ def get_ranked_data(region: str, rank: str, division: str):
     elif rank.upper() in RANKS_LOWELO:
         players = []
         for page in range(1,10):
-            url = f"https://{region}.api.riotgames.com/lol/league/v4/entries/RANKED_SOLO_5x5/{rank}/{division}?page={page}&api_key={API_KEY}"
+            url = f"https://{region}.api.riotgames.com/lol/league/v4/entries/RANKED_SOLO_5x5/{rank}/{division}?page={page}"
+            headers = {"X-Riot-Token": API_KEY}
             try:
-                response = requests.get(url)
+                response = requests.get(url, headers=headers, timeout=10)
 
                 if response.status_code == 200:
                     data = response.json()
                     players.append(data) 
                 else:
                     print(response.status_code)
-                    error = response.json()
-                    print (error['message'])
+                    try:
+                        error = response.json()
+                    except Exception:
+                        error = response.text
+                    print(error)
                     return None
             
             except requests.exceptions.RequestException as e:
                 print('Error:', e)
                 return None
             
+    if not players:
+        return []
+
     players = list(itertools.chain(*players))
     return players
 
 def parse_data(entries, region: str, rank: str):
     results = []
+
+    if not entries:
+        return results
 
     for entry in entries:
         results.append({"puuid": entry['puuid'],
