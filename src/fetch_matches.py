@@ -17,13 +17,20 @@ MATCH_ROUTING = {
     "jp": "asia",
     "oc1": "sea"
 }
-API_KEY = np.loadtxt("api.txt", dtype=str)
+def load_api_key(path="api.txt"):
+    with open(path, "r", encoding="utf-8") as handle:
+        lines = [line.strip() for line in handle if line.strip()]
+    if len(lines) != 1:
+        raise ValueError("api.txt must contain exactly one non-empty line with the API key.")
+    return lines[0]
+
+API_KEY = load_api_key()
 
 def make_riot_get():
     @sleep_and_retry
     @limits(calls=100, period=120)  # per routing
-    def riot_get(url, session):
-        return session.get(url)
+    def riot_get(url, session, headers=None, params=None):
+        return session.get(url, headers=headers, params=params, timeout=10)
     return riot_get
 
 riot_get_by_routing = {
@@ -34,13 +41,16 @@ riot_get_by_routing = {
 }
 
 def get_match_ids(match_routing: str, puuid: str, count: int, session, riot_get, max_retries=3):
-    
-    url = f"https://{match_routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?start=0&count={count}&api_key={API_KEY}"
+    puuid = str(puuid).strip()
+    url = f"https://{match_routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids"
+    headers = {"X-Riot-Token": API_KEY}
+    params = {"start": 0, "count": count}
 
     for attempt in range(max_retries):
-        response = riot_get(url, session)
+        response = riot_get(url, session, headers=headers, params=params)
         
         if response.status_code == 200:
+            print(f"[OK] routing={match_routing} puuid={puuid[:6]}.. count={count}")
             return response.json()
         elif response.status_code == 429:
             retry_after = int(response.headers.get("Retry-After", 1))
@@ -49,8 +59,13 @@ def get_match_ids(match_routing: str, puuid: str, count: int, session, riot_get,
             time.sleep(retry_after + 1)
             # Continue to retry instead of returning []
         elif response.status_code < 416:
-            error = response.json()['message']
-            print(f"Error: {error}, {response.status_code}")
+            try:
+                error_payload = response.json()
+            except Exception:
+                error_payload = response.text
+            print(
+                f"[ERR] status={response.status_code} routing={match_routing} puuid={puuid[:6]}.. len={len(puuid)} payload={error_payload}"
+            )
             return []
         else:
             print(f"Error {response.status_code} for puuid {puuid} (attempt {attempt + 1}/{max_retries})")
@@ -61,12 +76,15 @@ def get_match_ids(match_routing: str, puuid: str, count: int, session, riot_get,
     return []
 
 def fetch_match_ids_for_routing(players_subset, routing, match_ids, lock):
+    print(f"[START] routing={routing} players={len(players_subset)}")
     session = requests.Session()
     riot_get = riot_get_by_routing[routing]
 
     
     total = len(players_subset)
     for idx, (_, row) in enumerate(players_subset.iterrows(), 1):
+        if idx == 1:
+            print(f"[INFO] First puuid on {routing}: {row.puuid[:6]}..")
         if idx % 100 == 0:
             print(f"[{routing}] Processed {idx}/{total} players")
         
@@ -84,9 +102,16 @@ def fetch_match_ids_for_routing(players_subset, routing, match_ids, lock):
 
 
 def main():
+    if not API_KEY or len(str(API_KEY).strip()) < 10:
+        raise ValueError("api.txt seems empty or invalid.")
+
     players = pd.read_parquet("data_raw_silver/player_index.parquet")
 
     players["match_routing"] = players["region"].map(MATCH_ROUTING)
+
+    missing_routing = players["match_routing"].isna().sum()
+    if missing_routing:
+        print(f"[WARN] Players with missing routing: {missing_routing}")
 
     match_ids = set()
     lock = Lock()
