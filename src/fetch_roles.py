@@ -119,7 +119,7 @@ def fetch_roles_for_routing(match_ids_subset, routing, roles: list, matches: set
 
 
 def main():
-    match_ids = pd.read_parquet("data_raw/match_ids.parquet")
+    match_ids = pd.read_parquet("data_raw_silver/match_ids.parquet")
 
     match_ids["match_routing"] = (
         match_ids["match_id"]
@@ -153,12 +153,12 @@ def main():
     print(f"\nTotal unique roles collected: {len(roles)}")
     
     data = pd.DataFrame(roles)
-    data.to_parquet("data_raw/player_roles.parquet", index=False)
-    data.to_csv("data_raw/player_roles.csv", index=False)
+    data.to_parquet("data_raw_silver/player_roles.parquet", index=False)
+    data.to_csv("data_raw_silver/player_roles.csv", index=False)
 
     matches_filtered = pd.DataFrame({"match_id": list(matches)})
-    matches_filtered.to_parquet("data_raw/match_ids_filtered.parquet", index=False)
-    matches_filtered.to_csv("data_raw/match_ids_filtered.csv", index=False)
+    matches_filtered.to_parquet("data_raw_silver/match_ids_filtered.parquet", index=False)
+    matches_filtered.to_csv("data_raw_silver/match_ids_filtered.csv", index=False)
 
 
 if __name__ == "__main__":

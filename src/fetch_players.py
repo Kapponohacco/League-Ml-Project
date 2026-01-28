@@ -2,24 +2,26 @@ import requests
 import numpy as np
 import pandas as pd
 import argparse
+import itertools
 
 REGIONS = {"eun1", "euw1", "kr", "na1", "br1", "jp", "ru", "oc1"}
 RANKS_HIGHELO = {"challenger", "grandmaster", "master"} #the lowercase uppercase changes are due to api url conventions
 RANKS_LOWELO = {"DIAMOND", "EMERALD", "PLATINUM", "GOLD", "SILVER"}
 DIVISIONS = {"IV","III","II","I"}
 RANK_PRIORITY = {
-    "CHALLENGER": 7,
-    "GRANDMASTER": 6,
-    "MASTER": 5,
-    "DIAMOND": 4,
-    "EMERALD": 3,
-    "PLATINUM": 2,
-    "GOLD": 1,
-    "SILVER": 0
+    "CHALLENGER": 8,
+    "GRANDMASTER": 7,
+    "MASTER": 6,
+    "DIAMOND": 5,
+    "EMERALD": 4,
+    "PLATINUM": 3,
+    "GOLD": 2,
+    "SILVER": 1,
+    "BRONZE": 0
 }
 API_KEY = np.loadtxt("api.txt", dtype = str) 
     
-def get_ranked_data(region: str, rank: str):
+def get_ranked_data(region: str, rank: str, division: str):
     
     if region not in REGIONS:
         print(region)
@@ -45,30 +47,33 @@ def get_ranked_data(region: str, rank: str):
             return None
         
     elif rank.upper() in RANKS_LOWELO:
-        for division in DIVISIONS:
-            url = f"https://{region}.api.riotgames.com/lol/league/v4/entries/RANKED_SOLO_5x5/{rank}/{division}?page=1&api_key={API_KEY}"
-            players = []
+        players = []
+        for page in range(1,10):
+            url = f"https://{region}.api.riotgames.com/lol/league/v4/entries/RANKED_SOLO_5x5/{rank}/{division}?page={page}&api_key={API_KEY}"
             try:
                 response = requests.get(url)
 
                 if response.status_code == 200:
                     data = response.json()
-                    players.append(data["entries"]) 
+                    players.append(data) 
                 else:
+                    print(response.status_code)
                     error = response.json()
-                    print (error["message"])
+                    print (error['message'])
                     return None
             
             except requests.exceptions.RequestException as e:
                 print('Error:', e)
                 return None
-        return players
+            
+    players = list(itertools.chain(*players))
+    return players
 
 def parse_data(entries, region: str, rank: str):
     results = []
 
     for entry in entries:
-        results.append({"puuid": entry["puuid"],
+        results.append({"puuid": entry['puuid'],
                 "region": region,
                 "rank": rank.upper()})
 
@@ -99,8 +104,9 @@ def main():
     #loading all divisions of gold and silver will be a suicide as well ,but eh
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--region", nargs="+", default=["eun1", "euw1", "kr", "na1"])
-    parser.add_argument("--rank", nargs="+", default=["challenger", "grandmaster", "master"])
+    parser.add_argument("--region", nargs="+", default=["eun1", "euw1"])
+    parser.add_argument("--rank", nargs="+", default=["SILVER"])
+    parser.add_argument("--division", nargs="+", default=["IV"])
 
     args = parser.parse_args()
 
@@ -108,14 +114,15 @@ def main():
 
     for region in args.region:
         for rank in args.rank:
-            players = parse_data(get_ranked_data(region, rank), region, rank)
-            for player in players:
-                data_players.append(player)
+            for division in args.division:
+                players = parse_data(get_ranked_data(region, rank, division), region, rank)
+                for player in players:
+                    data_players.append(player)
 
     df_players = deduplicate_player_data(data_players)
 
-    df_players.to_parquet("data_raw/player_index.parquet", index=False)
-    df_players.to_csv("data_raw/player_index.csv", index=False)
+    df_players.to_parquet("data_raw_silver/player_index.parquet", index=False)
+    df_players.to_csv("data_raw_silver/player_index.csv", index=False)
 
 
 if __name__ == "__main__":

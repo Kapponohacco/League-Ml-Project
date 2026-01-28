@@ -84,7 +84,7 @@ def fetch_match_ids_for_routing(players_subset, routing, match_ids, lock):
 
 
 def main():
-    players = pd.read_parquet("data_raw/player_index.parquet")
+    players = pd.read_parquet("data_raw_silver/player_index.parquet")
 
     players["match_routing"] = players["region"].map(MATCH_ROUTING)
 
@@ -104,8 +104,8 @@ def main():
     print(f"\nTotal unique match IDs collected: {len(match_ids)}")
     
     data = pd.DataFrame({"match_id": list(match_ids)})
-    data.to_parquet("data_raw/match_ids.parquet", index=False)
-    data.to_csv("data_raw/match_ids.csv", index=False)
+    data.to_parquet("data_raw_silver/match_ids.parquet", index=False)
+    data.to_csv("data_raw_silver/match_ids.csv", index=False)
 
 
 if __name__ == "__main__":
