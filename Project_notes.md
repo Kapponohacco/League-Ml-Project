@@ -1,6 +1,4 @@
 
-
-
 ## Outliery:
 - Sprawdzić trajektorie, czy ktoś co minute nie cofał się do bazy itd..
 
@@ -23,7 +21,7 @@ train the models based on different approaches and see if anything changes.
 Likely not 72 / 482k is not a lot
 
 ## Feature Engeneering 
-- Odwrócić koordynty jednej ze storn tak by obie druzyny "zaczynały" z tego samego spawna (wtedy trzeba usunąć zmienną team)
+- Odwrócić koordynty jednej ze storn tak by obie druzyny "zaczynały" z tego samego spawna (wtedy trzeba usunąć zmienną team) 
 - Uśrednić wartości koordynatów do którejś minuty
 
 ## Different models
