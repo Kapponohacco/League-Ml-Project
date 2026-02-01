@@ -121,6 +121,8 @@ def fetch_roles_for_routing(match_ids_subset, routing, roles: list, matches: set
 def main():
     match_ids = pd.read_parquet("data_raw_silver/match_ids.parquet")
 
+    match_ids = match_ids.head(12000)
+
     match_ids["match_routing"] = (
         match_ids["match_id"]
         .str.split("_")
