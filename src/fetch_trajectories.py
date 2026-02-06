@@ -21,25 +21,33 @@ MATCH_ROUTING = {
     "jp": "asia",
     "oc1": "sea"
 }
-API_KEY = np.loadtxt("api.txt", dtype=str)
+def load_api_key(path="api.txt"):
+    with open(path, "r", encoding="utf-8") as handle:
+        lines = [line.strip() for line in handle if line.strip()]
+    if len(lines) != 1:
+        raise ValueError("api.txt must contain exactly one non-empty line with the API key.")
+    return lines[0]
 
-def riot_get(session, routing, url):
+API_KEY = load_api_key()
+
+def riot_get(session, routing, url, headers=None, params=None):
     with routing_lock[routing]:
         elapsed = time.time() - last_call_time[routing]
         if elapsed < ROUTING_INTERVAL:
             time.sleep(ROUTING_INTERVAL - elapsed)
 
-        response = session.get(url)
+        response = session.get(url, headers=headers, params=params, timeout=10)
         last_call_time[routing] = time.time()
 
     return response
 
 def get_trajectories(match_routing: str, match_id: str, session, max_retries=3):
-    url = f"https://{match_routing}.api.riotgames.com/lol/match/v5/matches/{match_id}/timeline?api_key={API_KEY}"
+    url = f"https://{match_routing}.api.riotgames.com/lol/match/v5/matches/{match_id}/timeline"
+    headers = {"X-Riot-Token": API_KEY}
 
     for attempt in range(max_retries):
         try:
-            response = riot_get(session, match_routing, url)
+            response = riot_get(session, match_routing, url, headers=headers)
         except requests.exceptions.RequestException as e:
             print(f"[{match_routing}] Connection error for {match_id}: {e}")
             time.sleep(2 + attempt)
